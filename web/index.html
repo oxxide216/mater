@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mater Language VM</title>
+    <link rel="icon" href="data:;=">
+  </head>
+  <body>
+  <script>
+    async function init() {
+      const { instance } = await WebAssembly.instantiateStreaming(
+        fetch("./mater.wasm")
+      );
+    }
+    init();
+  </script>
+  </body>
+</html>
