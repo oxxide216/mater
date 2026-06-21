@@ -13,9 +13,10 @@ if [[ $DEST_DIR == "" ]]; then
   exit 1
 fi
 
+rm -rf $DEST_DIR
 mkdir -p $DEST_DIR
 
-cp $BYTECODE $DEST_DIR
+cp $BYTECODE $DEST_DIR/main.mbc
 
 if [ -e "mater.wasm" ]; then
   cp "mater.wasm" $DEST_DIR
