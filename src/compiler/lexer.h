@@ -24,6 +24,9 @@ typedef enum {
   TokenStatusEOF,
 } TokenStatus;
 
-TokenStatus lex(Lexer *lexer, Token *token, Str *file_path);
+Lexer lexer_create(Str code);
+void  lexer_destroy(Lexer *lexer);
+
+TokenStatus lexer_lex(Lexer *lexer, Token *token, Str file_path);
 
 #endif // LEXER_H

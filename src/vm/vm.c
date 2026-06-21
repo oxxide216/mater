@@ -177,7 +177,7 @@ void vm_run_proc(Vm *vm, u32 index) {
         } break;
 
         case OpKindRem: {
-          c = value_float(fmod(a->as._float, b->as._float));
+          c = value_float(mod_float(a->as._float, b->as._float));
         } break;
 
         default: {

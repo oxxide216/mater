@@ -17,7 +17,7 @@ extern void print_int(i32 _int);
 extern void print_float(f32 _float);
 extern void print_bool(bool _bool);
 
-extern f32 fmod(f32 a, f32 b);
+extern f32 mod_float(f32 a, f32 b);
 
 u32 str_len(char *str);
 

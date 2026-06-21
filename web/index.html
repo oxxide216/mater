@@ -21,7 +21,7 @@
             print_int: (_int) => console.log(_int),
             print_float: (_float) => console.log(_float),
             print_bool: (_bool) => console.log(_bool != 0 ? "true" : "false"),
-            fmod: (a, b) => a % b,
+            mod_float: (a, b) => a % b,
           },
         };
         const { instance } = await WebAssembly.instantiateStreaming(

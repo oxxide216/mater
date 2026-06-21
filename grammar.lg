@@ -3,9 +3,12 @@ newline=\n
 comment=//
 
 proc=proc
+end=end
+bool=false|true
 
 oparen=\(
 cparen=\)
+comma=,
 str="
 
 int=\-?0-9+

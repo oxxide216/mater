@@ -5,6 +5,15 @@
 #define LEXGEN_TRANSITION_TABLE_IMPLEMENTATION
 #include "grammar.h"
 
+Lexer lexer_create(Str code) {
+  return (Lexer) { code, 0, 0, get_transition_table(), {} };
+}
+
+void lexer_destroy(Lexer *lexer) {
+  if (lexer->temp_sb.buffer)
+    free(lexer->temp_sb.buffer);
+}
+
 static char escape_char(Str *str, u32 *col) {
   char _char = str->ptr[0];
 
@@ -103,7 +112,7 @@ static char escape_char(Str *str, u32 *col) {
   }
 }
 
-TokenStatus lex(Lexer *lexer, Token *token, Str *file_path) {
+TokenStatus lexer_lex(Lexer *lexer, Token *token, Str file_path) {
   if (lexer->code.len > 0) {
     u64 id = 0;
     u32 char_len;
@@ -137,7 +146,7 @@ TokenStatus lex(Lexer *lexer, Token *token, Str *file_path) {
       u32 wchar_len;
       wchar _wchar = get_next_wchar(lexer->code, 0, &wchar_len);
 
-      PERROR(STR_FMT":%u:%u: ", "Unexpected `%lc`\n", STR_ARG(*file_path),
+      PERROR(STR_FMT":%u:%u: ", "Unexpected `%lc`\n", STR_ARG(file_path),
              lexer->row + 1, lexer->col + 1, (wint_t) _wchar);
       exit(1);
     }
@@ -173,7 +182,7 @@ TokenStatus lex(Lexer *lexer, Token *token, Str *file_path) {
 
       if (lexer->code.len == 0) {
         PERROR(STR_FMT":%u:%u: ", "String literal was not closed\n",
-               STR_ARG(*file_path), row + 1, col + 1);
+               STR_ARG(file_path), row + 1, col + 1);
         exit(1);
       }
 
@@ -183,7 +192,9 @@ TokenStatus lex(Lexer *lexer, Token *token, Str *file_path) {
       --lexer->code.len;
       ++lexer->col;
 
-      lexeme = sb_to_str(lexer->temp_sb);
+      lexeme.len = lexer->temp_sb.len;
+      lexeme.ptr = malloc(lexeme.len);
+      memcpy(lexeme.ptr, lexer->temp_sb.buffer, lexeme.len);
 
       lexer->temp_sb.len = 0;
     } else {
