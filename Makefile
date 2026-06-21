@@ -48,5 +48,9 @@ src/compiler/grammar.h: libs/lexgen/lexgen
 libs/lexgen/lexgen:
 > cd libs/lexgen && ./build.sh
 
+run: all
+> ./mater-deploy test.mbc dest
+> cd dest && python -m http.server 8080
+
 clean:
 > rm -rf $(BUILD_DIR) mater mater.wasm

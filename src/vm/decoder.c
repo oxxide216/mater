@@ -12,9 +12,9 @@ bool decode_procs(Procs *procs, u8 *bytecode, u32 len) {
   procs->items[0] = (Proc) {
     STR_LIT("init"),
     {
-      walloc(sizeof(Instr) * 2),
-      2,
-      2,
+      walloc(sizeof(Instr) * 4),
+      4,
+      4,
     },
   };
 
@@ -24,12 +24,31 @@ bool decode_procs(Procs *procs, u8 *bytecode, u32 len) {
       .push = {
         ValueKindInt,
         {
-          ._int = 69,
+          ._int = 420,
         },
       },
     },
   };
   procs->items[0].instrs.items[1] = (Instr) {
+    InstrKindPush,
+    {
+      .push = {
+        ValueKindInt,
+        {
+          ._int = 246,
+        },
+      },
+    },
+  };
+  procs->items[0].instrs.items[2] = (Instr) {
+    InstrKindOp,
+    {
+      .op = {
+        OpKindAdd,
+      },
+    },
+  };
+  procs->items[0].instrs.items[3] = (Instr) {
     InstrKindCall,
     {
       .call = {

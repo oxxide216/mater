@@ -28,6 +28,7 @@ typedef Da(Value *) Values;
 typedef enum {
   InstrKindPush = 0,
   InstrKindCall,
+  InstrKindOp,
 } InstrKind;
 
 typedef struct {
@@ -39,9 +40,22 @@ typedef struct {
   u32 args_len;
 } InstrCall;
 
+typedef enum {
+  OpKindAdd = 0,
+  OpKindSub,
+  OpKindMul,
+  OpKindDiv,
+  OpKindRem,
+} OpKind;
+
+typedef struct {
+  OpKind kind;
+} InstrOp;
+
 typedef union {
   InstrPush push;
   InstrCall call;
+  InstrOp   op;
 } InstrAs;
 
 typedef struct {
