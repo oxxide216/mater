@@ -5,13 +5,45 @@
     <link rel="icon" href="data:;=">
   </head>
   <body>
-  <script>
-    async function init() {
-      const { instance } = await WebAssembly.instantiateStreaming(
-        fetch("./mater.wasm")
-      );
-    }
-    init();
-  </script>
+    <script>
+      async function init() {
+        const imports = {
+          env: {
+            print_str: (ptr, len) => {
+              const bytes = new Int8Array(
+                instance.exports.memory.buffer,
+                ptr,
+                len,
+              );
+              const str = new TextDecoder("utf8").decode(bytes);
+              console.log(str);
+            },
+            print_int: (_int) => console.log(_int),
+            print_float: (_float) => console.log(_float),
+            print_bool: (_bool) => console.log(_bool != 0 ? "true" : "false"),
+          },
+        };
+        const { instance } = await WebAssembly.instantiateStreaming(
+          fetch("./mater.wasm"),
+          imports,
+        );
+        const encoder = new TextEncoder();
+        let bytecode_array = new Uint8Array(instance.exports.memory.buffer);
+        const bytecode = await fetch(
+          "main.mbc",
+          {
+            responseType: "arraybuffer",
+          },
+        );
+        bytecode_array.set(await bytecode.arrayBuffer());
+        const vm = instance.exports.vm_create(bytecode_array, bytecode_array.length);
+        let proc_name_array =
+          new Uint8Array(instance.exports.memory.buffer, bytecode.length, 4);
+        const encoded_proc_name = encoder.encode("init");
+        proc_name_array.set(encoded_proc_name);
+        instance.exports.vm_run_proc_named(proc_name_array, 4);
+      }
+      init();
+    </script>
   </body>
 </html>

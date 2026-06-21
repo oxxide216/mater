@@ -2,13 +2,15 @@
 
 CC = clang
 LD = wasm-ld
-override CFLAGS += -Wall -Wextra -Ilibs
+override CFLAGS += -Wall -Wextra -Ilibs -Isrc/common
 override LDFLAGS +=
 override COMPILER_CFLAGS += $(CFLAGS) -Ilibs/lexgen/include
 override COMPILER_LDFLAGS += $(LDFLAGS)
-override VM_CFLAGS += $(CFLAGS) --target=wasm32 -Os
-override VM_LDFLAGS += $(LDFLAGS) -mwasm32 --strip-all -O3
-EXPORTS =
+override VM_CFLAGS += $(CFLAGS) --target=wasm32 -Os \
+                                -DSHL_DEFS_NO_STD -DSHL_STR_NO_STD
+override VM_LDFLAGS += $(LDFLAGS) -mwasm32 --strip-all -O3 \
+                                  --allow-undefined --no-entry
+EXPORTS = --export=vm_create --export=vm_run_proc_named
 BUILD_DIR = build
 
 COMPILER_SRC = $(wildcard src/compiler/*.c)
