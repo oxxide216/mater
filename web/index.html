@@ -50,9 +50,10 @@
         const vm = instance.exports.vm_create(bytecode_array, buffer.byteLength);
         let proc_name_array =
           new Uint8Array(instance.exports.memory.buffer, buffer.byteLength, 4);
-        const encoded_proc_name = new TextEncoder().encode("init");
+        const encoded_proc_name = new TextEncoder().encode("main");
         proc_name_array.set(encoded_proc_name);
         instance.exports.vm_run_proc_named(vm, buffer.byteLength, 4, 0);
+        instance.exports.vm_destroy(vm);
       }
       init();
     </script>

@@ -1,5 +1,13 @@
 #include "decoder.h"
+#ifdef __wasm__
 #include "web-api.h"
+#endif
+
+#ifdef __wasm__
+#define ALLOC walloc
+#else
+#define ALLOC malloc
+#endif
 
 #define decode_buffer(decoder, buffer, len)        \
   do {                                             \
@@ -54,7 +62,7 @@ static bool decode_value_impl(Decoder *decoder, Value *value) {
 
   case ValueKindStr: {
     decode_buffer(decoder, &value->as.str.len, sizeof(value->as.str.len));
-    value->as.str.ptr = walloc(value->as.str.len);
+    value->as.str.ptr = ALLOC(value->as.str.len);
     decode_buffer(decoder, value->as.str.ptr, value->as.str.len);
   } break;
   }
@@ -67,18 +75,18 @@ bool decode_procs(Procs *procs, u8 *bytecode, u32 len) {
 
   decode_buffer(&decoder, &decoder.procs->len, sizeof(decoder.procs->len));
   decoder.procs->cap = decoder.procs->len;
-  decoder.procs->items = walloc(sizeof(Proc) * decoder.procs->cap);
+  decoder.procs->items = ALLOC(sizeof(Proc) * decoder.procs->cap);
 
   for (u32 i = 0; i < decoder.procs->len; ++i) {
     Proc *proc = decoder.procs->items + i;
 
     decode_buffer(&decoder, &proc->name.len, sizeof(proc->name.len));
-    proc->name.ptr = walloc(proc->name.len);
+    proc->name.ptr = ALLOC(proc->name.len);
     decode_buffer(&decoder, proc->name.ptr, proc->name.len);
 
     decode_buffer(&decoder, &proc->instrs.len, sizeof(proc->instrs.len));
     proc->instrs.cap = proc->instrs.len;
-    proc->instrs.items = walloc(sizeof(Instr) * proc->instrs.cap);
+    proc->instrs.items = ALLOC(sizeof(Instr) * proc->instrs.cap);
 
     for (u32 j = 0; j < proc->instrs.len; ++j) {
       Instr *instr = proc->instrs.items + j;
@@ -94,7 +102,7 @@ bool decode_procs(Procs *procs, u8 *bytecode, u32 len) {
 
       case InstrKindCall: {
         decode_buffer(&decoder, &instr->as.call.name.len, sizeof(instr->as.call.name.len));
-        instr->as.call.name.ptr = walloc(instr->as.call.name.len);
+        instr->as.call.name.ptr = ALLOC(instr->as.call.name.len);
         decode_buffer(&decoder, instr->as.call.name.ptr, instr->as.call.name.len);
         decode_buffer(&decoder, &instr->as.call.args_len, sizeof(instr->as.call.args_len));
       } break;

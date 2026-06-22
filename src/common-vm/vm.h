@@ -37,7 +37,8 @@ Value *value_float(f32 _float);
 Value *value_bool(bool _bool);
 Value *value_str(Str str);
 
-Vm *vm_create(u8 *bytecode, u32 len);
+Vm   *vm_create(u8 *bytecode, u32 len);
+void  vm_destroy(Vm *vm);
 
 u32 vm_get_proc_index(Vm *vm, Str name);
 

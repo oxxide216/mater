@@ -1,51 +1,56 @@
+#include <math.h>
+
 #include "vm.h"
-#include "web-api.h"
 #include "decoder.h"
 #include "built-ins.h"
-#define SHL_STR_IMPLEMENTATION
-#include "shl/shl-str.h"
-
-static void print_error(char *str) {
-  eprint_str(str, str_len(str));
-}
+#include "shl/shl-log.h"
 
 Value *value_int(i32 _int) {
-  Value *value = walloc(sizeof(Value));
+  Value *value = malloc(sizeof(Value));
   value->kind = ValueKindInt;
   value->as._int = _int;
   return value;
 }
 
 Value *value_float(f32 _float) {
-  Value *value = walloc(sizeof(Value));
+  Value *value = malloc(sizeof(Value));
   value->kind = ValueKindFloat;
   value->as._float = _float;
   return value;
 }
 
 Value *value_bool(bool _bool) {
-  Value *value = walloc(sizeof(Value));
+  Value *value = malloc(sizeof(Value));
   value->kind = ValueKindBool;
   value->as._bool = _bool;
   return value;
 }
 
 Value *value_str(Str str) {
-  Value *value = walloc(sizeof(Value));
+  Value *value = malloc(sizeof(Value));
   value->kind = ValueKindStr;
   value->as.str = str;
   return value;
 }
 
+char *get_value_kind_str(Value *value) {
+  switch (value->kind) {
+  case ValueKindInt:   return "int";
+  case ValueKindFloat: return "float";
+  case ValueKindBool:  return "bool";
+  case ValueKindStr:   return "str";
+  }
+
+  return NULL;
+}
+
 Vm *vm_create(u8 *bytecode, u32 len) {
   Procs procs = {0};
 
-  if (!decode_procs(&procs, bytecode, len)) {
-    print_error("Invalid bytecode!");
+  if (!decode_procs(&procs, bytecode, len))
     return NULL;
-  }
 
-  Vm *vm = walloc(sizeof(Vm));
+  Vm *vm = malloc(sizeof(Vm));
   *vm = (Vm) {0};
   vm->procs = procs;
   add_default_built_ins(&vm->built_ins);
@@ -53,18 +58,18 @@ Vm *vm_create(u8 *bytecode, u32 len) {
 }
 
 void vm_destroy(Vm *vm) {
-  // Deeply free complex types
+  // TODO: Deeply free complex types
   if (vm->stack.items)
-    wfree(vm->stack.items);
+    free(vm->stack.items);
 
-  // Deeply free complex types in instructions
+  // TODO: Deeply free complex types in instructions
   for (u32 i = 0; i < vm->procs.len; ++i)
     if (vm->procs.items[i].instrs.items)
-      wfree(vm->procs.items[i].instrs.items);
+      free(vm->procs.items[i].instrs.items);
   if (vm->procs.items)
-    wfree(vm->procs.items);
+    free(vm->procs.items);
 
-  wfree(vm);
+  free(vm);
 }
 
 u32 vm_get_proc_index(Vm *vm, Str name) {
@@ -79,14 +84,14 @@ static bool stack_size_is_enough(Values *stack, u32 min) {
   if (stack->len >= min)
     return true;
 
-  print_error("Stack size is not enough!");
+  ERROR("Stack size is not enough: %u/%u", stack->len, min);
 
   return false;
 }
 
 void vm_run_proc(Vm *vm, u32 index) {
   if (index >= vm->procs.len) {
-    print_error("Procedure index is out of bounds!");
+    ERROR("Procedure index is out of bounds: %u/%u", index, vm->procs.len);
     return;
   }
 
@@ -99,11 +104,10 @@ void vm_run_proc(Vm *vm, u32 index) {
     switch (instr->kind) {
     case InstrKindPush: {
       // TODO: deeply clone value when I will introduce complex data types
-      Value *value = walloc(sizeof(Value));
+      Value *value = malloc(sizeof(Value));
       *value = instr->as.push.value;
 
-      da_reserve_space(&vm->stack);
-      vm->stack.items[vm->stack.len++] = value;
+      DA_APPEND(vm->stack, value);
     } break;
 
     case InstrKindCall: {
@@ -124,7 +128,8 @@ void vm_run_proc(Vm *vm, u32 index) {
 
       if ((a->kind != ValueKindInt && a->kind != ValueKindFloat) ||
           a->kind != b->kind) {
-        print_error("Incorrect types for binary operation!");
+        ERROR("Incorrect types for binary operation: %s and %s",
+              get_value_kind_str(a), get_value_kind_str(b));
         return;
       }
 
@@ -153,7 +158,7 @@ void vm_run_proc(Vm *vm, u32 index) {
         } break;
 
         default: {
-          print_error("Incorrect binary operation!");
+          ERROR("Incorrect binary operation: %u", instr->as.op.kind);
           return;
         }
         }
@@ -176,11 +181,11 @@ void vm_run_proc(Vm *vm, u32 index) {
         } break;
 
         case OpKindRem: {
-          c = value_float(mod_float(a->as._float, b->as._float));
+          c = value_float(fmodf(a->as._float, b->as._float));
         } break;
 
         default: {
-          print_error("Incorrect binary operation!");
+          ERROR("Incorrect binary operation: %u", instr->as.op.kind);
           return;
         }
         }
@@ -190,7 +195,7 @@ void vm_run_proc(Vm *vm, u32 index) {
     } break;
 
     default: {
-      print_error("Incorrect instruction!");
+      ERROR("Incorrect instruction: %u", instr->kind);
       return;
     }
     }
@@ -209,7 +214,7 @@ void vm_run_proc_named(Vm *vm, char *name, u32 name_len, u32 args_len) {
   u32 index = vm_get_proc_index(vm, name_str);
 
   if (index == (u32) -1) {
-    print_error("Attemp to call an undefined procedure!");
+    ERROR("Attemp to call an undefined procedure `%.*s`\n", name_len, name);
     return;
   }
 

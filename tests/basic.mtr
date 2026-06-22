@@ -1,4 +1,4 @@
-proc init()
+proc main()
   print("Hello from Mater!")
   alert("Bruh!")
 end
