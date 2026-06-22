@@ -6,7 +6,7 @@ override CFLAGS += -Wall -Wextra -Ilibs -Isrc/common -Isrc/common-vm -Isrc/commo
 override LDFLAGS +=
 override LINUX_CFLAGS += $(CFLAGS) -Ilibs/lexgen/include
 override LINUX_LDFLAGS += $(LDFLAGS) -lm
-override WASM_CFLAGS += $(CFLAGS) -Isrc/vm --target=wasm32 -Os \
+override WASM_CFLAGS += $(CFLAGS) -Isrc/vm --target=wasm32 -Os -fno-builtin \
                                   -DSHL_DEFS_NO_STD -DSHL_STR_NO_STD
 override WASM_LDFLAGS += $(LDFLAGS) -mwasm32 --strip-all -O3 \
                                     --allow-undefined --no-entry
