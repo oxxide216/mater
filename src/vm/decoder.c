@@ -1,62 +1,111 @@
 #include "decoder.h"
 #include "web-api.h"
 
+#define decode_buffer(decoder, buffer, len)        \
+  do {                                             \
+    if (!decode_buffer_impl(decoder, buffer, len)) \
+      return false;                                \
+  } while (0)
+
+#define decode_value(decoder, value)        \
+  do {                                      \
+    if (!decode_value_impl(decoder, value)) \
+      return false;                         \
+  } while (0)
+
+typedef struct {
+  Procs *procs;
+  u8    *bytecode;
+  u32    len, decoded;
+} Decoder;
+
+static bool decode_buffer_impl(Decoder *decoder, void *buffer, u32 len) {
+  if (decoder->decoded + len > decoder->len)
+    return false;
+
+  for (u32 i = 0; i < len; ++i)
+    ((u8 *) buffer)[i] = decoder->bytecode[decoder->decoded + i];
+
+  decoder->decoded += len;
+
+  return true;
+}
+
+static bool decode_value_impl(Decoder *decoder, Value *value) {
+  u8 kind;
+
+  decode_buffer(decoder, &kind, 1);
+  value->kind = kind;
+
+  switch (value->kind) {
+  case ValueKindInt: {
+    decode_buffer(decoder, &value->as._int, sizeof(value->as._int));
+  } break;
+
+  case ValueKindFloat: {
+    decode_buffer(decoder, &value->as._float, sizeof(value->as._float));
+  } break;
+
+  case ValueKindBool: {
+    u8 _bool;
+    decode_buffer(decoder, &_bool, 1);
+    value->as._bool = _bool;
+  } break;
+
+  case ValueKindStr: {
+    decode_buffer(decoder, &value->as.str.len, sizeof(value->as.str.len));
+    value->as.str.ptr = walloc(value->as.str.len);
+    decode_buffer(decoder, value->as.str.ptr, value->as.str.len);
+  } break;
+  }
+
+  return true;
+}
+
 bool decode_procs(Procs *procs, u8 *bytecode, u32 len) {
-  (void) bytecode;
-  (void) len;
+  Decoder decoder = { procs, bytecode, len, 0 };
 
-  procs->len = 1;
-  procs->cap = 1;
-  procs->items = walloc(sizeof(Proc));
+  decode_buffer(&decoder, &decoder.procs->len, sizeof(decoder.procs->len));
+  decoder.procs->cap = decoder.procs->len;
+  decoder.procs->items = walloc(sizeof(Proc) * decoder.procs->cap);
 
-  procs->items[0] = (Proc) {
-    STR_LIT("init"),
-    {
-      walloc(sizeof(Instr) * 4),
-      4,
-      4,
-    },
-  };
+  for (u32 i = 0; i < decoder.procs->len; ++i) {
+    Proc *proc = decoder.procs->items + i;
 
-  procs->items[0].instrs.items[0] = (Instr) {
-    InstrKindPush,
-    {
-      .push = {
-        ValueKindInt,
-        {
-          ._int = 420,
-        },
-      },
-    },
-  };
-  procs->items[0].instrs.items[1] = (Instr) {
-    InstrKindPush,
-    {
-      .push = {
-        ValueKindInt,
-        {
-          ._int = 246,
-        },
-      },
-    },
-  };
-  procs->items[0].instrs.items[2] = (Instr) {
-    InstrKindOp,
-    {
-      .op = {
-        OpKindAdd,
-      },
-    },
-  };
-  procs->items[0].instrs.items[3] = (Instr) {
-    InstrKindCall,
-    {
-      .call = {
-        STR_LIT("print"),
-        1,
-      },
-    },
-  };
+    decode_buffer(&decoder, &proc->name.len, sizeof(proc->name.len));
+    proc->name.ptr = walloc(proc->name.len);
+    decode_buffer(&decoder, proc->name.ptr, proc->name.len);
+
+    decode_buffer(&decoder, &proc->instrs.len, sizeof(proc->instrs.len));
+    proc->instrs.cap = proc->instrs.len;
+    proc->instrs.items = walloc(sizeof(Instr) * proc->instrs.cap);
+
+    for (u32 j = 0; j < proc->instrs.len; ++j) {
+      Instr *instr = proc->instrs.items + j;
+      u8 kind;
+
+      decode_buffer(&decoder, &kind, 1);
+      instr->kind = kind;
+
+      switch (instr->kind) {
+      case InstrKindPush: {
+        decode_value(&decoder, &instr->as.push.value);
+      } break;
+
+      case InstrKindCall: {
+        decode_buffer(&decoder, &instr->as.call.name.len, sizeof(instr->as.call.name.len));
+        instr->as.call.name.ptr = walloc(instr->as.call.name.len);
+        decode_buffer(&decoder, instr->as.call.name.ptr, instr->as.call.name.len);
+        decode_buffer(&decoder, &instr->as.call.args_len, sizeof(instr->as.call.args_len));
+      } break;
+
+      case InstrKindOp: {
+        decode_buffer(&decoder, &kind, 1);
+        instr->as.op.kind = kind;
+      } break;
+      }
+    }
+  }
 
   return true;
 }

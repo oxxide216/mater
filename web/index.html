@@ -28,7 +28,6 @@
           fetch("./mater.wasm"),
           imports,
         );
-        const encoder = new TextEncoder();
         let bytecode_array = new Uint8Array(instance.exports.memory.buffer);
         const bytecode = await fetch(
           "main.mbc",
@@ -36,13 +35,15 @@
             responseType: "arraybuffer",
           },
         );
-        bytecode_array.set(await bytecode.arrayBuffer());
-        const vm = instance.exports.vm_create(bytecode_array, bytecode_array.length);
+        const buffer = await bytecode.arrayBuffer();
+        bytecode_array.set(new Uint8Array(buffer));
+        const vm = instance.exports.vm_create(bytecode_array, buffer.byteLength);
         let proc_name_array =
-          new Uint8Array(instance.exports.memory.buffer, bytecode.length, 4);
+          new Uint8Array(instance.exports.memory.buffer, buffer.byteLength, 4);
+        const encoder = new TextEncoder();
         const encoded_proc_name = encoder.encode("init");
         proc_name_array.set(encoded_proc_name);
-        instance.exports.vm_run_proc_named(vm, proc_name_array, 4, 0);
+        instance.exports.vm_run_proc_named(vm, buffer.byteLength, 4, 0);
       }
       init();
     </script>
