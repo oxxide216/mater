@@ -123,8 +123,53 @@ static void parser_parse_primary_expr(Parser *parser) {
   }
 }
 
-static void parser_parse_expr(Parser *parser) {
+static void parser_parse_mul(Parser *parser) {
   parser_parse_primary_expr(parser);
+
+  Token token;
+  parser_peek_token(parser, &token);
+
+  if (token.id != TT_STAR && token.id != TT_SLASH && token.id != TT_PERC)
+    return;
+
+  parser_next_token(parser, NULL);
+
+  parser_parse_primary_expr(parser);
+
+  emit_instr(
+    parser->procs,
+    InstrKindOp,
+    .op = {
+      token.id == TT_STAR ? OpKindMul :
+        token.id == TT_SLASH ? OpKindDiv : OpKindRem,
+    },
+  );
+}
+
+static void parser_parse_add(Parser *parser) {
+  parser_parse_mul(parser);
+
+  Token token;
+  parser_peek_token(parser, &token);
+
+  if (token.id != TT_PLUS && token.id != TT_MINUS)
+    return;
+
+  parser_next_token(parser, NULL);
+
+  parser_parse_mul(parser);
+
+  emit_instr(
+    parser->procs,
+    InstrKindOp,
+    .op = {
+      token.id == TT_PLUS ? OpKindAdd : OpKindSub,
+    },
+  );
+}
+
+static void parser_parse_expr(Parser *parser) {
+  parser_parse_add(parser);
 }
 
 static void parser_parse_stmt(Parser *parser) {
