@@ -27,10 +27,10 @@ COMMON_LINUX_OBJ = $(patsubst src/common/%.c,$(BUILD_DIR)/linux/common/%.o,$(COM
 COMMON_WASM_OBJ = $(patsubst src/common/%.c,$(BUILD_DIR)/wasm/common/%.o,$(COMMON_SRC))
 LEXGEN_OBJ = $(patsubst %.c,$(BUILD_DIR)/linux/%.o,$(LEXGEN_SRC))
 
-all: mater mater.wasm
+all: materc mater.wasm
 
-mater: $(COMPILER_OBJ) $(COMMON_LINUX_OBJ) $(LEXGEN_OBJ)
-> $(CC) -o mater $(COMPILER_OBJ) $(COMMON_LINUX_OBJ) $(LEXGEN_OBJ) $(LINUX_LDFLAGS)
+materc: $(COMPILER_OBJ) $(COMMON_LINUX_OBJ) $(LEXGEN_OBJ)
+> $(CC) -o materc $(COMPILER_OBJ) $(COMMON_LINUX_OBJ) $(LEXGEN_OBJ) $(LINUX_LDFLAGS)
 
 mater.wasm: $(VM_OBJ) $(COMMON_WASM_OBJ)
 > $(LD) -o mater.wasm $(VM_OBJ) $(COMMON_WASM_OBJ) $(WASM_LDFLAGS) $(EXPORTS)
@@ -54,9 +54,9 @@ libs/lexgen/lexgen:
 > cd libs/lexgen && ./build.sh
 
 run: all
-> ./mater $(MATER_TEST_SRC)
+> ./materc $(MATER_TEST_SRC)
 > ./mater-deploy $(patsubst tests/%.mtr,%.mbc,$(MATER_TEST_SRC)) dest
 > cd dest && python -m http.server 8080
 
 clean:
-> rm -rf $(BUILD_DIR) mater mater.wasm
+> rm -rf $(BUILD_DIR) materc mater.wasm

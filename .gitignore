@@ -1,6 +1,6 @@
 /libs/
 /build/
-/mater
+/materc
 /mater.wasm
 /dest/
 /src/compiler/grammar.h
