@@ -13,7 +13,7 @@ override WASM_LDFLAGS += $(LDFLAGS) -mwasm32 --strip-all -O3 \
 EXPORTS = --export=vm_create --export=vm_run_proc_named
 BUILD_DIR = build
 
-BYTECODE = basic.mbc
+MATER_TEST_SRC = tests/basic.mtr
 
 COMPILER_SRC = $(wildcard src/compiler/*.c)
 VM_SRC = $(wildcard src/vm/*.c)
@@ -54,7 +54,8 @@ libs/lexgen/lexgen:
 > cd libs/lexgen && ./build.sh
 
 run: all
-> ./mater-deploy $(BYTECODE) dest
+> ./mater $(MATER_TEST_SRC)
+> ./mater-deploy $(patsubst tests/%.mtr,%.mbc,$(MATER_TEST_SRC)) dest
 > cd dest && python -m http.server 8080
 
 clean:

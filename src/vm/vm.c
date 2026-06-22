@@ -5,6 +5,10 @@
 #define SHL_STR_IMPLEMENTATION
 #include "shl/shl-str.h"
 
+static void print_error(char *str) {
+  eprint_str(str, str_len(str));
+}
+
 void built_ins_add(BuiltIns *built_ins, Str name, u32 args_len, BuiltInFunc func) {
   u32 hash = str_hash(name) + args_len;
   u32 index = hash % BUILT_INS_CAP;
@@ -81,14 +85,19 @@ u32 vm_get_proc_index(Vm *vm, Str name) {
 }
 
 static bool stack_size_is_enough(Values *stack, u32 min) {
-  // TODO: Error reporting
-  return stack->len >= min;
+  if (stack->len >= min)
+    return true;
+
+  print_error("Stack size is not enough!");
+
+  return false;
 }
 
 void vm_run_proc(Vm *vm, u32 index) {
-  // TODO: Error reporting
-  if (index >= vm->procs.len)
+  if (index >= vm->procs.len) {
+    print_error("Procedure index is out of bounds!");
     return;
+  }
 
   Proc *proc = vm->procs.items + index;
   u32 ip = 0;
@@ -107,7 +116,6 @@ void vm_run_proc(Vm *vm, u32 index) {
     } break;
 
     case InstrKindCall: {
-      // TODO: Error reporting
       if (!stack_size_is_enough(&vm->stack, instr->as.call.args_len))
         return;
 
@@ -117,17 +125,17 @@ void vm_run_proc(Vm *vm, u32 index) {
     } break;
 
     case InstrKindOp: {
-      // TODO: Error reporting
       if (!stack_size_is_enough(&vm->stack, 2))
         return;
 
       Value *b = vm->stack.items[--vm->stack.len];
       Value *a = vm->stack.items[--vm->stack.len];
 
-      // TODO: Error reporting
       if ((a->kind != ValueKindInt && a->kind != ValueKindFloat) ||
-          a->kind != b->kind)
+          a->kind != b->kind) {
+        print_error("Incorrect types for binary operation!");
         return;
+      }
 
       Value *c;
 
@@ -154,7 +162,7 @@ void vm_run_proc(Vm *vm, u32 index) {
         } break;
 
         default: {
-          // TODO: Error reporting
+          print_error("Incorrect binary operation!");
           return;
         }
         }
@@ -181,7 +189,7 @@ void vm_run_proc(Vm *vm, u32 index) {
         } break;
 
         default: {
-          // TODO: Error reporting
+          print_error("Incorrect binary operation!");
           return;
         }
         }
@@ -191,7 +199,7 @@ void vm_run_proc(Vm *vm, u32 index) {
     } break;
 
     default: {
-      // TODO: Error reporting
+      print_error("Incorrect instruction!");
       return;
     }
     }

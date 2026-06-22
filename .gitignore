@@ -4,3 +4,4 @@
 /mater.wasm
 /dest/
 /src/compiler/grammar.h
+*.mbc

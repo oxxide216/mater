@@ -6,22 +6,32 @@
   </head>
   <body>
     <script>
+      function ptr_len_to_str(instance, ptr, len) {
+        const bytes = new Int8Array(
+          instance.exports.memory.buffer,
+          ptr,
+          len,
+        );
+        return new TextDecoder("utf8").decode(bytes);
+      }
+
       async function init() {
         const imports = {
           env: {
-            print_str: (ptr, len) => {
-              const bytes = new Int8Array(
-                instance.exports.memory.buffer,
-                ptr,
-                len,
-              );
-              const str = new TextDecoder("utf8").decode(bytes);
-              console.log(str);
-            },
+            print_str: (ptr, len) => console.log(ptr_len_to_str(instance, ptr, len)),
             print_int: (_int) => console.log(_int),
             print_float: (_float) => console.log(_float),
             print_bool: (_bool) => console.log(_bool != 0 ? "true" : "false"),
+            wprint_str: (ptr, len) => console.warn(ptr_len_to_str(instance, ptr, len)),
+            wprint_int: (_int) => console.warn(_int),
+            wprint_float: (_float) => console.warn(_float),
+            wprint_bool: (_bool) => console.warn(_bool != 0 ? "true" : "false"),
+            eprint_str: (ptr, len) => console.error(ptr_len_to_str(instance, ptr, len)),
+            eprint_int: (_int) => console.error(_int),
+            eprint_float: (_float) => console.error(_float),
+            eprint_bool: (_bool) => console.error(_bool != 0 ? "true" : "false"),
             mod_float: (a, b) => a % b,
+            alert: (ptr, len) => alert(ptr_len_to_str(instance, ptr, len)),
           },
         };
         const { instance } = await WebAssembly.instantiateStreaming(
@@ -40,8 +50,7 @@
         const vm = instance.exports.vm_create(bytecode_array, buffer.byteLength);
         let proc_name_array =
           new Uint8Array(instance.exports.memory.buffer, buffer.byteLength, 4);
-        const encoder = new TextEncoder();
-        const encoded_proc_name = encoder.encode("init");
+        const encoded_proc_name = new TextEncoder().encode("init");
         proc_name_array.set(encoded_proc_name);
         instance.exports.vm_run_proc_named(vm, buffer.byteLength, 4, 0);
       }

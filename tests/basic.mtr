@@ -1,3 +1,4 @@
 proc init()
   print("Hello from Mater!")
+  alert("Bruh!")
 end

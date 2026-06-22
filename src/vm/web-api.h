@@ -17,7 +17,19 @@ extern void print_int(i32 _int);
 extern void print_float(f32 _float);
 extern void print_bool(bool _bool);
 
+extern void wprint_str(char *ptr, u32 len);
+extern void wprint_int(i32 _int);
+extern void wprint_float(f32 _float);
+extern void wprint_bool(bool _bool);
+
+extern void eprint_str(char *ptr, u32 len);
+extern void eprint_int(i32 _int);
+extern void eprint_float(f32 _float);
+extern void eprint_bool(bool _bool);
+
 extern f32 mod_float(f32 a, f32 b);
+
+extern void alert(char *ptr, u32 len);
 
 u32 str_len(char *str);
 
