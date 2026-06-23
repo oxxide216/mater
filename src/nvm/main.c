@@ -24,6 +24,8 @@ i32 main(i32 argc, char **argv) {
 
   Vm *vm = vm_create((u8 *) bytecode.ptr, bytecode.len);
 
+  free(bytecode.ptr);
+
   vm_run_proc_named(vm, "main", 4, 0);
 
   vm_destroy(vm);
